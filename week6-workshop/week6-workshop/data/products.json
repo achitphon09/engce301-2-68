@@ -1,11 +1,11 @@
 [
   {
     "id": 1,
-    "name": "iPhone 15 Pro",
+    "name": "iPhone 17 Pro Max",
     "category": "Electronics",
-    "price": 42900,
-    "stock": 15,
-    "description": "Latest iPhone with A17 Pro chip"
+    "price": 79000,
+    "stock": 10,
+    "description": "iPhone 17 Pro Max 256GB"
   },
   {
     "id": 2,
@@ -14,5 +14,13 @@
     "price": 39900,
     "stock": 8,
     "description": "13-inch MacBook Air with M2 chip"
+  },
+  {
+    "id": 3,
+    "name": "iPad Air",
+    "category": "Electronics",
+    "price": 19900,
+    "stock": 12,
+    "description": "10.9-inch iPad Air"
   }
 ]
