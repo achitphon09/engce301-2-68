@@ -1,61 +1,161 @@
-// นำเข้า Express
 const express = require('express');
-
-// สร้าง Application
+const fs = require('fs');
 const app = express();
-
-// กำหนด Port
 const PORT = 3000;
 
-// สร้าง Route แรก
-app.get('/', (req, res) => {
-  res.send('Hello World from Express! 🚀');
-});
+// Middleware สำหรับ parse JSON body
+app.use(express.json());
 
-// GET - ดึงรายการทั้งหมด
+// 🟢 GET - อ่านข้อมูลทั้งหมด
 app.get('/api/products', (req, res) => {
-  res.json({ 
-    message: 'Get all products',
-    data: []
+  fs.readFile('data.json', 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ 
+        error: 'Error reading file' 
+      });
+    }
+    
+    const jsonData = JSON.parse(data);
+    res.json(jsonData.products);
   });
 });
 
-// GET - ดึงรายการเดียวตาม ID
+// 🟢 GET - อ่านข้อมูลตาม ID
 app.get('/api/products/:id', (req, res) => {
-  const id = req.params.id;
-  res.json({ 
-    message: `Get product with ID: ${id}`,
-    data: { id: id, name: 'Sample Product' }
+  const id = parseInt(req.params.id);
+  
+  fs.readFile('data.json', 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ 
+        error: 'Error reading file' 
+      });
+    }
+    
+    const jsonData = JSON.parse(data);
+    const product = jsonData.products.find(p => p.id === id);
+    
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).json({ 
+        error: 'Product not found' 
+      });
+    }
   });
 });
 
-// POST - สร้างรายการใหม่
+// 🔵 POST - เพิ่มข้อมูลใหม่
 app.post('/api/products', (req, res) => {
-  res.json({ 
-    message: 'Create new product',
-    status: 'success'
+  const newProduct = req.body;
+  
+  fs.readFile('data.json', 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ 
+        error: 'Error reading file' 
+      });
+    }
+    
+    const jsonData = JSON.parse(data);
+    
+    // สร้าง ID ใหม่
+    newProduct.id = jsonData.products.length > 0 
+      ? Math.max(...jsonData.products.map(p => p.id)) + 1 
+      : 1;
+    
+    jsonData.products.push(newProduct);
+    
+    // บันทึกกลับลงไฟล์
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    fs.writeFile('data.json', jsonString, (err) => {
+      if (err) {
+        return res.status(500).json({ 
+          error: 'Error writing file' 
+        });
+      }
+      res.status(201).json(newProduct);
+    });
   });
 });
 
-// PUT - อัปเดตรายการ
+// 🟠 PUT - อัปเดตข้อมูล
 app.put('/api/products/:id', (req, res) => {
-  const id = req.params.id;
-  res.json({ 
-    message: `Update product with ID: ${id}`,
-    status: 'success'
+  const id = parseInt(req.params.id);
+  const updatedData = req.body;
+  
+  fs.readFile('data.json', 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ 
+        error: 'Error reading file' 
+      });
+    }
+    
+    const jsonData = JSON.parse(data);
+    const index = jsonData.products.findIndex(p => p.id === id);
+    
+    if (index === -1) {
+      return res.status(404).json({ 
+        error: 'Product not found' 
+      });
+    }
+    
+    // อัปเดตข้อมูล
+    jsonData.products[index] = { 
+      ...jsonData.products[index], 
+      ...updatedData, 
+      id 
+    };
+    
+    // บันทึกกลับลงไฟล์
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    fs.writeFile('data.json', jsonString, (err) => {
+      if (err) {
+        return res.status(500).json({ 
+          error: 'Error writing file' 
+        });
+      }
+      res.json(jsonData.products[index]);
+    });
   });
 });
 
-// DELETE - ลบรายการ
+// 🔴 DELETE - ลบข้อมูล
 app.delete('/api/products/:id', (req, res) => {
-  const id = req.params.id;
-  res.json({ 
-    message: `Delete product with ID: ${id}`,
-    status: 'success'
+  const id = parseInt(req.params.id);
+  
+  fs.readFile('data.json', 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ 
+        error: 'Error reading file' 
+      });
+    }
+    
+    const jsonData = JSON.parse(data);
+    const index = jsonData.products.findIndex(p => p.id === id);
+    
+    if (index === -1) {
+      return res.status(404).json({ 
+        error: 'Product not found' 
+      });
+    }
+    
+    // ลบข้อมูล
+    jsonData.products.splice(index, 1);
+    
+    // บันทึกกลับลงไฟล์
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    fs.writeFile('data.json', jsonString, (err) => {
+      if (err) {
+        return res.status(500).json({ 
+          error: 'Error writing file' 
+        });
+      }
+      res.json({ 
+        message: 'Product deleted successfully' 
+      });
+    });
   });
 });
 
-// เริ่ม Server
 app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });
